@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 from django.core import urlresolvers
+from django.http import HttpResponseNotAllowed
 
 
 class ContinueResolving(Exception):
@@ -67,7 +68,10 @@ class MultiResolverMatch(object):
         def multiview(request):
             for i, match in enumerate(self.matches):
                 try:
-                    return match.func(request, *match.args, **match.kwargs)
+                    response = match.func(request, *match.args, **match.kwargs)
+                    if type(response) == HttpResponseNotAllowed:
+                        continue
+                    return response
                 except self.exceptions:
                     continue
             raise urlresolvers.Resolver404({'tried': self.patterns_matched, 'path': self.path})
